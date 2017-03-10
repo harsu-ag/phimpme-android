@@ -24,6 +24,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.telephony.TelephonyManager;
@@ -50,6 +51,8 @@ import java.util.List;
 
 import vn.mbm.phimp.me.gallery3d.media.CropImage;
 
+import static android.app.Activity.RESULT_CANCELED;
+
 public class Camera2 extends android.support.v4.app.Fragment {
 	private static final String TAG = "Camera";
 	static Context ctx;
@@ -73,6 +76,8 @@ public class Camera2 extends android.support.v4.app.Fragment {
 	double lon;
 	int statusScreen = 0;
 	View view;
+	String picture="";
+
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -332,6 +337,31 @@ public class Camera2 extends android.support.v4.app.Fragment {
 		});
 
 	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode == 1 && resultCode == RESULT_CANCELED) {
+			if (deleteImage(picture))
+				Toast.makeText(ctx, "Discarded Image", Toast.LENGTH_SHORT).show();
+			else
+				Toast.makeText(ctx, "Unknown error occurred!", Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private boolean deleteImage(String picture) {
+		File file = new File(picture);
+		String path = file.getAbsolutePath();
+		if (file.delete()) {
+			ctx.getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+					MediaStore.Images.Media.DATA + "=?", new String[]{path});
+			return true;
+		}
+		return false;
+
+
+	}
+
 	ShutterCallback shutterCallback = new ShutterCallback() {
 		public void onShutter() {
 			//Dialog(1000, progress);
@@ -354,7 +384,7 @@ public class Camera2 extends android.support.v4.app.Fragment {
 
 			FileOutputStream outStream = null;
 			Bitmap rotatedBMP = null;
-			String picture = "";
+			picture = "";
 			Bitmap bmp =null;
 			//camera.startPreview();
 			Log.e("Size",String.valueOf(data.length)) ;
